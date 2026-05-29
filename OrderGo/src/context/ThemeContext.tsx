@@ -5,7 +5,7 @@ import { ThemeColors } from "../utils/types/ThemeColors";
 type ThemeMode = "light" | "dark";
 
 const lightColors: ThemeColors = {
-  background: "",
+  background: "#fff",
   buttonPrimaryBg: "#2563eb",
   buttonPrimaryText: "#fff",
   buttonSecondaryBg: "#f3f4f6",
@@ -16,11 +16,14 @@ const lightColors: ThemeColors = {
   textSecondary: "",
   primary: "",
   secondary: "",
-  inputBackground: ""
+  inputBackground: "#fff",
+  inputBorder: "#d1d5db",
+  inputText: "#111827",
+  inputPlaceholder: "#9ca3af",
 };
 
 const darkColors: ThemeColors = {
-  background: "",
+  background: "#121212",
   buttonPrimaryBg: "#3b82f6",
   buttonPrimaryText: "#fff",
   buttonSecondaryBg: "#374151",
@@ -31,7 +34,10 @@ const darkColors: ThemeColors = {
   textSecondary: "",
   primary: "",
   secondary: "",
-  inputBackground: ""
+  inputBackground: "#1f2937",
+  inputBorder: "#4b5563",
+  inputText: "#f9fafb",
+  inputPlaceholder: "#6b7280",
 };
 
 type ThemeContextType = {
@@ -49,7 +55,7 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  const [theme, setTheme] = useState<ThemeMode>("dark");
+  const [theme, setTheme] = useState<ThemeMode>("light");
 
   const colors = theme === "dark" ? darkColors : lightColors;
 

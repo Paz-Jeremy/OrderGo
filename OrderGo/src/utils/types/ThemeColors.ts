@@ -13,9 +13,14 @@ export type ThemeColors = {
   buttonTertiaryBg: string;
   buttonTertiaryText: string;
 
+  // Input
+  inputBackground: string;
+  inputBorder: string;
+  inputText: string;
+  inputPlaceholder: string;
+
   text: string;
   textSecondary: string;
   primary: string;
   secondary: string;
-  inputBackground: string;
 };

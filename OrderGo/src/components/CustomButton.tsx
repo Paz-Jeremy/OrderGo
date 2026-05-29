@@ -42,7 +42,7 @@ const getStyles = (
             ? colors.buttonSecondaryBg
             : colors.buttonTertiaryBg,
       padding: 12,
-      width: 150,
+      width: "auto",
     },
     buttonText: {
       color:
