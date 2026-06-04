@@ -1,7 +1,7 @@
 import { Text, TouchableOpacity, StyleSheet } from "react-native";
 
 import { ThemeColors } from "../utils/types/ThemeColors";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme } from "../contexts/ThemeContext";
 
 type CustomButtonProps = {
   title: string;

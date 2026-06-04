@@ -7,16 +7,27 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+
 import CustomInput from "../components/CustomInput";
 import CustomButton from "../components/CustomButton";
 
 // Importa el contexto de tu tema (ajusta la ruta según tu proyecto)
 import { useTheme } from "../contexts/ThemeContext";
+import CustomDropdown from "../components/CustomDropdown";
 
-export default function LoginScreen({ navigation }: any) {
+export default function RegisterScreen({ navigation }: any) {
   const { colors } = useTheme(); // Extraemos los colores dinámicos
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rol, setRol] = useState("");
+
+  // Definimos las opciones del Dropdown
+  const rolesOptions = [
+    { label: "Administrador", value: "admin" },
+    { label: "Mesero", value: "mesero" },
+    { label: "Cocina", value: "cocina" },
+  ];
 
   return (
     // SafeAreaView asegura que el contenido no quede debajo del reloj o el notch
@@ -34,16 +45,23 @@ export default function LoginScreen({ navigation }: any) {
           {/* Textos de bienvenida estilizados */}
           <View style={styles.headerContainer}>
             <Text style={[styles.title, { color: colors.inputText }]}>
-              ¡Bienvenido!
+              Registro
             </Text>
             <Text style={[styles.subtitle, { color: colors.inputPlaceholder }]}>
-              Por favor, inicia sesión para continuar.
+              Por favor, rellene el formulario para continuar.
             </Text>
           </View>
 
           {/* Formulario */}
+
           <CustomInput
-            type="email" // Añadí el type "email" para que aparezca el ícono y validación
+            placeholder="Ingresa tu nombre"
+            value={name}
+            onChange={setName}
+          ></CustomInput>
+
+          <CustomInput
+            type="email"
             placeholder="Ingresa tu correo"
             value={email}
             onChange={setEmail}
@@ -56,16 +74,23 @@ export default function LoginScreen({ navigation }: any) {
             onChange={setPassword}
           />
 
+          <CustomDropdown
+            placeholder="Selecciona un rol"
+            options={rolesOptions}
+            selectedValue={rol}
+            onSelect={setRol}
+          />
+
           {/* Contenedor del botón para darle separación */}
           <View style={styles.buttonWrapper}>
             <CustomButton
-              title="Iniciar Sesión"
-              onPress={() => console.log("Iniciando sesión...")}
+              title="Registrar"
+              onPress={() => console.log("Registrando...")}
             />
             <CustomButton
               variant="secondary"
-              title={"Registrarse"}
-              onPress={() => console.log("Redirigiendo a registro...")}
+              title={"Volver a login"}
+              onPress={() => console.log("Redirigiendo a login...")}
             ></CustomButton>
           </View>
         </View>

@@ -8,7 +8,7 @@ import {
   StyleSheet,
   KeyboardTypeOptions,
 } from "react-native";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme } from "../contexts/ThemeContext";
 
 type Props = {
   type?: "text" | "email" | "password" | "number";
