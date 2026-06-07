@@ -23,4 +23,9 @@ export type ThemeColors = {
   textSecondary: string;
   primary: string;
   secondary: string;
+
+  // Cards y Contadores
+  cardBackground: string;
+  imagePlaceholder: string;
+  counterBg: string;
 };

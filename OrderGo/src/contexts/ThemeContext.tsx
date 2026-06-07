@@ -5,21 +5,24 @@ import { ThemeColors } from "../utils/types/ThemeColors";
 type ThemeMode = "light" | "dark";
 
 const lightColors: ThemeColors = {
-  background: "#fff",
+  background: "#f3f4f6",
   buttonPrimaryBg: "#2563eb",
   buttonPrimaryText: "#fff",
-  buttonSecondaryBg: "#f3f4f6",
+  buttonSecondaryBg: "#e5e7eb",
   buttonSecondaryText: "#1f2937",
   buttonTertiaryBg: "transparent",
   buttonTertiaryText: "#4b5563",
-  text: "",
-  textSecondary: "",
-  primary: "",
-  secondary: "",
+  text: "#111827",
+  textSecondary: "#6b7280",
+  primary: "#2563eb",
+  secondary: "#4b5563",
   inputBackground: "#fff",
   inputBorder: "#d1d5db",
   inputText: "#111827",
   inputPlaceholder: "#9ca3af",
+  cardBackground: "#ffffff",
+  imagePlaceholder: "#e5e7eb",
+  counterBg: "#f3f4f6",
 };
 
 const darkColors: ThemeColors = {
@@ -30,14 +33,17 @@ const darkColors: ThemeColors = {
   buttonSecondaryText: "#f9fafb",
   buttonTertiaryBg: "transparent",
   buttonTertiaryText: "#9ca3af",
-  text: "",
-  textSecondary: "",
-  primary: "",
-  secondary: "",
+  text: "#f9fafb",
+  textSecondary: "#9ca3af",
+  primary: "#60a5fa",
+  secondary: "#9ca3af",
   inputBackground: "#1f2937",
   inputBorder: "#4b5563",
   inputText: "#f9fafb",
   inputPlaceholder: "#6b7280",
+  cardBackground: "#1f2937",
+  imagePlaceholder: "#374151",
+  counterBg: "#374151",
 };
 
 type ThemeContextType = {
