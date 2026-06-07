@@ -46,11 +46,6 @@ export default function CustomInput({
     if (type === "email" && !value.includes("@")) return "Correo inválido";
     if (type === "password" && value.length < 4)
       return "La contraseña es muy débil";
-    if (
-      (type === "number" && value.length < 8) ||
-      (type === "number" && value.includes("-"))
-    )
-      return "Número de teléfono inválido";
   };
 
   const error = getError();
