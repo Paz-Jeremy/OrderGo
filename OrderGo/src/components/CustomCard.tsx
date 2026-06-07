@@ -5,19 +5,19 @@ import { useTheme } from "../contexts/ThemeContext";
 
 type Props = {
   title: string;
-  subtitle: string;
-  iconName: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
-  iconColor: string;
-  iconBackgroundColor: string;
+  subtitle?: string;
+  iconName?: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
+  iconColor?: string;
+  iconBackgroundColor?: string;
   onPress: () => void;
 };
 
 export default function CustomCard({
   title,
-  subtitle,
-  iconName,
-  iconColor,
-  iconBackgroundColor,
+  subtitle = "",
+  iconName = "help",
+  iconColor = "#474747",
+  iconBackgroundColor = "#f3f4f6",
   onPress,
 }: Props) {
   const { colors } = useTheme();
@@ -43,9 +43,11 @@ export default function CustomCard({
 
       {/* Textos */}
       <Text style={[styles.title, { color: colors.inputText }]}>{title}</Text>
-      <Text style={[styles.subtitle, { color: colors.inputPlaceholder }]}>
-        {subtitle}
-      </Text>
+      {subtitle !== "" && (
+        <Text style={[styles.subtitle, { color: colors.inputPlaceholder }]}>
+          {subtitle}
+        </Text>
+      )}
     </TouchableOpacity>
   );
 }
