@@ -90,7 +90,7 @@ export default function RegisterScreen({ navigation }: any) {
             <CustomButton
               variant="secondary"
               title={"Volver a login"}
-              onPress={() => console.log("Redirigiendo a login...")}
+              onPress={() => {navigation.navigate("Login")}}
             ></CustomButton>
           </View>
         </View>

@@ -7,47 +7,34 @@ import CustomCard from "../components/CustomCard";
 const MENU_ITEMS = [
   {
     id: "1",
-    title: "Mesas",
-    subtitle: "Gestionar mesas del restaurante",
-    iconName: "table-furniture",
-    iconColor: "#3b82f6",
-    iconBackgroundColor: "#dbeafe",
-  },
-  {
-    id: "2",
-    title: "Menú",
-    subtitle: "Ver y gestionar platillos",
-    iconName: "silverware-fork-knife",
+    title: "Crear Pedido",
+    subtitle: "",
+    name: "OrderTabs",
+    iconName: "plus",
     iconColor: "#22c55e",
     iconBackgroundColor: "#dcfce7",
   },
   {
-    id: "3",
+    id: "2",
     title: "Pedidos",
     subtitle: "Pedidos actuales",
+    name: "",
     iconName: "cart-outline",
     iconColor: "#f59e0b",
     iconBackgroundColor: "#fef3c7",
   },
   {
-    id: "4",
-    title: "Platillos",
-    subtitle: "Gestionar platillos",
-    iconName: "food-drumstick",
-    iconColor: "#a855f7",
-    iconBackgroundColor: "#f3e8ff",
-  },
-  {
-    id: "5",
+    id: "3",
     title: "Ajustes",
     subtitle: "Personalización y ajustes",
+    name: "",
     iconName: "cog-outline",
     iconColor: "#6b7280",
     iconBackgroundColor: "#f3f4f6",
   },
 ];
 
-export default function MainMenuScreen() {
+export default function MainMenuScreen({ navigation }: any) {
   const { colors } = useTheme();
 
   return (
@@ -66,7 +53,9 @@ export default function MainMenuScreen() {
             iconName={item.iconName as any}
             iconColor={item.iconColor}
             iconBackgroundColor={item.iconBackgroundColor}
-            onPress={() => console.log(`Navegando a ${item.title}`)}
+            onPress={() => {
+              navigation.navigate("OrderTabs");
+            }}
           />
         )}
       />

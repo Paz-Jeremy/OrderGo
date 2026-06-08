@@ -12,11 +12,27 @@ import CustomButton from "../components/CustomButton";
 
 // Importa el contexto de tu tema (ajusta la ruta según tu proyecto)
 import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function LoginScreen({ navigation }: any) {
   const { colors } = useTheme(); // Extraemos los colores dinámicos
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const { login } = useAuth();
+
+  const handleLogin = () => {
+    try {
+      const allowed = login(email);
+      if (allowed) {
+        navigation.navigate("MainMenu");
+      } else {
+        console.log("no tiene acceso");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     // SafeAreaView asegura que el contenido no quede debajo del reloj o el notch
@@ -58,14 +74,13 @@ export default function LoginScreen({ navigation }: any) {
 
           {/* Contenedor del botón para darle separación */}
           <View style={styles.buttonWrapper}>
-            <CustomButton
-              title="Iniciar Sesión"
-              onPress={() => console.log("Iniciando sesión...")}
-            />
+            <CustomButton title="Iniciar Sesión" onPress={handleLogin} />
             <CustomButton
               variant="secondary"
               title={"Registrarse"}
-              onPress={() => console.log("Redirigiendo a registro...")}
+              onPress={() => {
+                navigation.navigate("Register");
+              }}
             ></CustomButton>
           </View>
         </View>
