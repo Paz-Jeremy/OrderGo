@@ -2,6 +2,7 @@ import React from "react";
 import { StyleSheet, FlatList, SafeAreaView } from "react-native";
 import { useTheme } from "../contexts/ThemeContext";
 import CustomCard from "../components/CustomCard";
+import { StatusBar } from "expo-status-bar";
 
 // Definimos los datos del menú basándonos en tu diseño
 const MENU_ITEMS = [
@@ -35,12 +36,13 @@ const MENU_ITEMS = [
 ];
 
 export default function MainMenuScreen({ navigation }: any) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
     >
+      <StatusBar style={isDark ? "light" : "dark"} />
       <FlatList
         data={MENU_ITEMS}
         keyExtractor={(item) => item.id}
