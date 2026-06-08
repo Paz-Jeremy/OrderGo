@@ -27,7 +27,7 @@ const MENU_ITEMS = [
     id: "3",
     title: "Ajustes",
     subtitle: "Personalización y ajustes",
-    name: "",
+    name: "Settings",
     iconName: "cog-outline",
     iconColor: "#6b7280",
     iconBackgroundColor: "#f3f4f6",
