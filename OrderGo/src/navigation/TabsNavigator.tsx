@@ -3,11 +3,13 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useTheme } from "../contexts/ThemeContext";
 import TablesScreen from "../screens/TablesScreen";
 import MenuScreen from "../screens/MenuScreen";
+import OrderDetail from "../screens/OrderDetails";
 
 //1. declarar tipado para pantallas y sus parametros
 type TabsParamList = {
   Tables: undefined;
   Products: undefined;
+  Details: undefined;
 };
 
 //2. crear el tabs navigator el cual se va a manejar la navegacion por pestañas
@@ -48,6 +50,16 @@ export default function TabNavigator() {
           title: "Productos",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="fast-food" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Details"
+        component={OrderDetail}
+        options={{
+          title: "Detalles",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="create" size={size} color={color} />
           ),
         }}
       />
