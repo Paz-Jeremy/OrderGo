@@ -18,7 +18,7 @@ const MENU_ITEMS = [
     id: "2",
     title: "Pedidos",
     subtitle: "Pedidos actuales",
-    name: "",
+    name: "Orders",
     iconName: "cart-outline",
     iconColor: "#f59e0b",
     iconBackgroundColor: "#fef3c7",
@@ -44,7 +44,7 @@ export default function MainMenuScreen({ navigation }: any) {
       <FlatList
         data={MENU_ITEMS}
         keyExtractor={(item) => item.id}
-        numColumns={2} // <--- Esto crea la magia de la cuadrícula
+        numColumns={2}
         contentContainerStyle={styles.listContainer}
         renderItem={({ item }) => (
           <CustomCard
