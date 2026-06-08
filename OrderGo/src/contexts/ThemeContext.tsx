@@ -25,7 +25,8 @@ const lightColors: ThemeColors = {
   counterBg: "#f3f4f6",
   headerBackground: "#ffffff",
   headerText: "#001f5c",
-  tabBarBackground: "ffffff"
+  tabBarBackground: "#ffffff",
+  onSecondary: "#ffffff",
 };
 
 const darkColors: ThemeColors = {
@@ -49,13 +50,15 @@ const darkColors: ThemeColors = {
   counterBg: "#374151",
   headerBackground: "#1e1e1e",
   headerText: "#e0e0e0",
-  tabBarBackground: "#1e1e1e"
+  tabBarBackground: "#1e1e1e",
+  onSecondary: "#ffffff"
 };
 
 type ThemeContextType = {
   theme: ThemeMode;
   colors: ThemeColors;
   toggleTheme: () => void;
+  isDark: boolean;
 };
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
@@ -70,6 +73,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [theme, setTheme] = useState<ThemeMode>("dark");
 
   const colors = theme === "dark" ? darkColors : lightColors;
+  const isDark = theme === "dark";
 
   useEffect(() => {
     const loadTheme = async () => {
@@ -89,7 +93,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, colors, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, colors, toggleTheme, isDark }}>
       {children}
     </ThemeContext.Provider>
   );

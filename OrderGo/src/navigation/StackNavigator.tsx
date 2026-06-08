@@ -4,6 +4,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import TabNavigator from "./TabsNavigator";
 import RegisterScreen from "../screens/RegisterScreen";
 import MainMenuScreen from "../screens/MainMenuScreen";
+import SettingsScreen from "../screens/UserSettings/SettingsScreen";
 
 //1. declarar tipado para pantallas y sus parametros
 export type RootStackParamList = {
@@ -11,6 +12,7 @@ export type RootStackParamList = {
   Register: undefined;
   MainMenu: undefined;
   OrderTabs: undefined;
+  Settings: undefined;
 };
 
 //2. crear el stack navigator el cual va a manejar la navegacion
@@ -52,6 +54,12 @@ export default function StackNavigator() {
         name="OrderTabs"
         component={TabNavigator}
         options={{ headerShown: false, gestureEnabled: false }}
+      />
+
+      <Stack.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ headerShown: true, title:"Configuración" }}
       />
     </Stack.Navigator>
   );

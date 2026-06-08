@@ -1,4 +1,5 @@
 export type ThemeColors = {
+  onSecondary: string;
   tabBarBackground: string;
   headerText: string;
   headerBackground: string;
