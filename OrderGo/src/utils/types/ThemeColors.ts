@@ -1,4 +1,8 @@
 export type ThemeColors = {
+  tabBarBackground: string;
+  headerText: string;
+  headerBackground: string;
+
   background: string;
 
   // Botón Primario

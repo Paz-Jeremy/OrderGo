@@ -23,6 +23,9 @@ const lightColors: ThemeColors = {
   cardBackground: "#ffffff",
   imagePlaceholder: "#e5e7eb",
   counterBg: "#f3f4f6",
+  headerBackground: "#ffffff",
+  headerText: "#001f5c",
+  tabBarBackground: "ffffff"
 };
 
 const darkColors: ThemeColors = {
@@ -44,6 +47,9 @@ const darkColors: ThemeColors = {
   cardBackground: "#1f2937",
   imagePlaceholder: "#374151",
   counterBg: "#374151",
+  headerBackground: "#1e1e1e",
+  headerText: "#e0e0e0",
+  tabBarBackground: "#1e1e1e"
 };
 
 type ThemeContextType = {
