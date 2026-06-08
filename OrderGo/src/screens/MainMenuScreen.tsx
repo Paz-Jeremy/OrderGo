@@ -54,7 +54,7 @@ export default function MainMenuScreen({ navigation }: any) {
             iconColor={item.iconColor}
             iconBackgroundColor={item.iconBackgroundColor}
             onPress={() => {
-              navigation.navigate("OrderTabs");
+              navigation.navigate(item.name);
             }}
           />
         )}
@@ -68,6 +68,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContainer: {
-    padding: 15, // Espacio alrededor de toda la cuadrícula
+    padding: 15,
   },
 });
