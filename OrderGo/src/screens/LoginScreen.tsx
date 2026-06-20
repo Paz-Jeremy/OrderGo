@@ -6,6 +6,7 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import CustomInput from "../components/CustomInput";
 import CustomButton from "../components/CustomButton";
@@ -18,19 +19,20 @@ export default function LoginScreen({ navigation }: any) {
   const { colors } = useTheme(); // Extraemos los colores dinámicos
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const { login } = useAuth();
 
-  const handleLogin = () => {
-    try {
-      const allowed = login(email);
-      if (allowed) {
-        navigation.navigate("MainMenu");
-      } else {
-        console.log("no tiene acceso");
-      }
-    } catch (error) {
-      console.log(error);
+  const handleLogin = async () => {
+    if (!email.trim() || !password.trim()) {
+      Alert.alert("Campos obligatorios", "Ingresa tu correo y contraseña.");
+      return;
+    }
+    setIsLoading(true);
+    const success = await login(email.trim(), password);
+    setIsLoading(false);
+    if (success) {
+      navigation.navigate("MainMenu");
     }
   };
 
@@ -74,7 +76,11 @@ export default function LoginScreen({ navigation }: any) {
 
           {/* Contenedor del botón para darle separación */}
           <View style={styles.buttonWrapper}>
-            <CustomButton title="Iniciar Sesión" onPress={handleLogin} />
+            <CustomButton
+              title="Iniciar Sesión"
+              loading={isLoading}
+              onPress={handleLogin}
+            />
             <CustomButton
               variant="secondary"
               title={"Registrarse"}

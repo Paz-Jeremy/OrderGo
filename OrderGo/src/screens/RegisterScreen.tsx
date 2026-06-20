@@ -6,6 +6,7 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 
 import CustomInput from "../components/CustomInput";
@@ -14,13 +15,17 @@ import CustomButton from "../components/CustomButton";
 // Importa el contexto de tu tema (ajusta la ruta según tu proyecto)
 import { useTheme } from "../contexts/ThemeContext";
 import CustomDropdown from "../components/CustomDropdown";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function RegisterScreen({ navigation }: any) {
   const { colors } = useTheme(); // Extraemos los colores dinámicos
+  const { register } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rol, setRol] = useState("");
+  const [role, setRole] = useState("");
+
+  const [isLoading, setIsLoading] = useState(false);
 
   // Definimos las opciones del Dropdown
   const rolesOptions = [
@@ -28,6 +33,27 @@ export default function RegisterScreen({ navigation }: any) {
     { label: "Mesero", value: "mesero" },
     { label: "Cocina", value: "cocina" },
   ];
+
+  const handleRegister = async () => {
+    if (!name.trim() || !role.trim() || !email.trim() || !password.trim()) {
+      Alert.alert(
+        "Campos obligatorios",
+        "Todos los campos deben estar completos.",
+      );
+      return;
+    }
+    setIsLoading(true);
+    const success = await register(
+      name.trim(),
+      role.trim(),
+      email.trim(),
+      password,
+    );
+    setIsLoading(false);
+    if (success) {
+      navigation.navigate("Login");
+    }
+  };
 
   return (
     // SafeAreaView asegura que el contenido no quede debajo del reloj o el notch
@@ -77,21 +103,17 @@ export default function RegisterScreen({ navigation }: any) {
           <CustomDropdown
             placeholder="Selecciona un rol"
             options={rolesOptions}
-            selectedValue={rol}
-            onSelect={setRol}
+            selectedValue={role}
+            onSelect={setRole}
           />
 
           {/* Contenedor del botón para darle separación */}
           <View style={styles.buttonWrapper}>
             <CustomButton
               title="Registrar"
-              onPress={() => console.log("Registrando...")}
+              loading={isLoading}
+              onPress={handleRegister}
             />
-            <CustomButton
-              variant="secondary"
-              title={"Volver a login"}
-              onPress={() => {navigation.navigate("Login")}}
-            ></CustomButton>
           </View>
         </View>
       </KeyboardAvoidingView>
