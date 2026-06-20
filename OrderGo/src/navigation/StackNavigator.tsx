@@ -41,7 +41,7 @@ export default function StackNavigator() {
       <Stack.Screen
         name="Register"
         component={RegisterScreen}
-        options={{ headerShown: false, gestureEnabled: false }}
+        options={{ headerShown: true , title: ""}}
       />
       <Stack.Screen
         name="MainMenu"
