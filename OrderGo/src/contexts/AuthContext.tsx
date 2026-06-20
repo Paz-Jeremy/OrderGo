@@ -1,14 +1,26 @@
 import { createContext, useContext, useState } from "react";
+import { supabase } from "../services/supabaseClient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Alert } from "react-native";
 
 //1. Tipado de objeto principal del contexto
 type User = {
+  token: string;
+  role: string;
+  name: string;
   email: string;
   pwd?: string;
 } | null;
 
 type AuthContextType = {
   user: User | null;
-  login: (email: string) => boolean;
+  login: (email: string, password: string) => Promise<boolean>;
+  register: (
+    name: string,
+    role: string,
+    email: string,
+    password: string,
+  ) => Promise<boolean>;
   logout: () => void;
 };
 
@@ -26,12 +38,65 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User>(null);
 
-  const login = (email: string): boolean => {
-    const allowed = email.endsWith(".edu");
-    if (allowed) {
-      setUser({ email });
+  const setUserSession = (data: any) => {
+    const session = data.session;
+
+    if (session && session.user) {
+      setUser({
+        token: session.access_token,
+        role: session.user.user_metadata.role,
+        email: session.user.email,
+        name: session.user.user_metadata.name,
+      });
+      AsyncStorage.setItem("token", session.access_token);
+    } else {
+      setUser(null);
     }
-    return allowed;
+  };
+
+  const login = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      Alert.alert("Error al iniciar sesion", error.message);
+      return false;
+    }
+
+    setUserSession(data);
+    return true;
+  };
+
+  const register = async (
+    name: string,
+    role: string,
+    email: string,
+    password: string,
+  ) => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+          role: role,
+        },
+      },
+    });
+
+    if (error) {
+      Alert.alert("Error al registrar", error.message);
+      return false;
+    }
+
+    Alert.alert(
+      "¡Registro exitoso!",
+      "La cuenta fue creada correctamente. Verifica tu correo electrónico si la confirmación está habilitada.",
+    );
+    console.log("Usuario registrado:", data.user);
+    return true;
   };
 
   const logout = () => {
@@ -39,7 +104,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
