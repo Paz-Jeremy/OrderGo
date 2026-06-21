@@ -6,6 +6,7 @@ import RegisterScreen from "../screens/RegisterScreen";
 import MainMenuScreen from "../screens/MainMenuScreen";
 import SettingsScreen from "../screens/UserSettings/SettingsScreen";
 import OrdersScreen from "../screens/OrdersScreen";
+import { useAuth } from "../contexts/AuthContext";
 
 //1. declarar tipado para pantallas y sus parametros
 export type RootStackParamList = {
@@ -23,10 +24,11 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 //3. utilizar el stack
 export default function StackNavigator() {
   const { colors } = useTheme();
+  const { user } = useAuth();
 
   return (
     <Stack.Navigator
-      initialRouteName="Login"
+      initialRouteName={user?.token != null ? "MainMenu" : "Login"}
       screenOptions={{
         headerShown: true,
         headerStyle: { backgroundColor: colors.headerBackground },
@@ -41,7 +43,7 @@ export default function StackNavigator() {
       <Stack.Screen
         name="Register"
         component={RegisterScreen}
-        options={{ headerShown: true , title: ""}}
+        options={{ headerShown: true, title: "" }}
       />
       <Stack.Screen
         name="MainMenu"
@@ -61,13 +63,13 @@ export default function StackNavigator() {
       <Stack.Screen
         name="Orders"
         component={OrdersScreen}
-        options={{ headerShown: true, title:"Pedidos" }}
+        options={{ headerShown: true, title: "Pedidos" }}
       />
 
       <Stack.Screen
         name="Settings"
         component={SettingsScreen}
-        options={{ headerShown: true, title:"Configuración" }}
+        options={{ headerShown: true, title: "Configuración" }}
       />
     </Stack.Navigator>
   );

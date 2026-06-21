@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "../services/supabaseClient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Alert } from "react-native";
@@ -6,7 +6,7 @@ import { Alert } from "react-native";
 //1. Tipado de objeto principal del contexto
 type User = {
   token: string;
-  role: string;
+  role: "admin" | "mesero" | "cocina";
   name: string;
   email: string;
   pwd?: string;
@@ -14,6 +14,7 @@ type User = {
 
 type AuthContextType = {
   user: User | null;
+  isLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   register: (
     name: string,
@@ -37,6 +38,7 @@ export const useAuth = () => {
 //3. Crear el Provider: medio por el cual se maneja el estado global
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const setUserSession = (data: any) => {
     const session = data.session;
@@ -51,8 +53,53 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       AsyncStorage.setItem("token", session.access_token);
     } else {
       setUser(null);
+      AsyncStorage.removeItem("token");
     }
   };
+
+  // Al montar la app: restaurar sesión si existe
+  useEffect(() => {
+    const restoreSession = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+
+        if (error || !data.session) {
+          setUser(null);
+          await AsyncStorage.removeItem("token");
+        } else {
+          setUserSession(data);
+        }
+      } catch (e) {
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    restoreSession();
+
+    // Escuchar cambios de sesión (refresh de token, logout en otra pestaña, etc.)
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (session && session.user) {
+          setUser({
+            token: session.access_token,
+            role: session.user.user_metadata.role,
+            email: session.user.user_metadata.email,
+            name: session.user.user_metadata.name,
+          });
+          AsyncStorage.setItem("token", session.access_token);
+        } else {
+          setUser(null);
+          AsyncStorage.removeItem("token");
+        }
+      },
+    );
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, []);
 
   const login = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -99,12 +146,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return true;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
+    await AsyncStorage.removeItem("token");
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
