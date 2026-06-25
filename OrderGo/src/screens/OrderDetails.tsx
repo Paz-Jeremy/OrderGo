@@ -6,16 +6,44 @@ import {
   SafeAreaView,
   FlatList,
   Alert,
+  TouchableOpacity,
 } from "react-native";
 import { useTheme } from "../contexts/ThemeContext";
 import CustomInput from "../components/CustomInput";
 import CustomButton from "../components/CustomButton";
+import CustomDropdown from "../components/CustomDropdown";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { setTabNotes, submitOrderTab } from "../store/orderTabsSlice";
+import {
+  finishOrderTab,
+  removeItemFromTab,
+  setTabNotes,
+  setTabStatus,
+  setTabTableStatus,
+  submitOrderTab,
+  updateItemNotes,
+  updateItemQuantity,
+} from "../store/orderTabsSlice";
+import type { OrderStatus } from "../store/orderTabsSlice";
+import type { RestaurantTableStatus } from "../store/tablesSlice";
 import {
   selectActiveTab,
   selectActiveTabTotals,
 } from "../store/orderTabsSelectors";
+
+const ORDER_STATUS_OPTIONS: {
+  label: string;
+  value: Exclude<OrderStatus, "draft" | "delivered">;
+}[] = [
+  { label: "Pendiente", value: "pending" },
+  { label: "Preparando", value: "preparing" },
+  { label: "Listo", value: "ready" },
+];
+
+const TABLE_STATUS_OPTIONS: { label: string; value: RestaurantTableStatus }[] =
+  [
+    { label: "Disponible", value: "available" },
+    { label: "Ocupada", value: "occupied" },
+  ];
 
 export default function OrderDetail({ navigation }: any) {
   const { colors } = useTheme();
@@ -38,6 +66,77 @@ export default function OrderDetail({ navigation }: any) {
     );
   }
 
+  const canEditItems = activeTab.status !== "delivered";
+  const canFinishOrder = activeTab.synced && !!activeTab.remoteOrderId;
+
+  const goBackAfterSave = (wasSynced: boolean) => {
+    const parentNavigation = navigation.getParent?.() ?? navigation;
+    parentNavigation.navigate(wasSynced ? "Orders" : "MainMenu");
+  };
+
+  const handleSaveOrder = async () => {
+    const wasSynced = activeTab.synced;
+    const result = await dispatch(submitOrderTab({ tabId: activeTab.tabId }));
+
+    if (submitOrderTab.fulfilled.match(result)) {
+      Alert.alert(
+        "Éxito",
+        wasSynced
+          ? "Pedido actualizado correctamente."
+          : "Orden enviada correctamente.",
+        [
+          {
+            text: "OK",
+            onPress: () => goBackAfterSave(wasSynced),
+          },
+        ],
+      );
+    } else {
+      Alert.alert(
+        "Error",
+        result.payload?.toString() ?? "No se pudo guardar la orden.",
+      );
+    }
+  };
+
+  const handleFinishOrder = () => {
+    Alert.alert(
+      "Finalizar pedido",
+      "¿Quieres finalizar este pedido? La mesa quedará disponible y el pedido ya no se podrá abrir.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Finalizar",
+          style: "destructive",
+          onPress: async () => {
+            const result = await dispatch(
+              finishOrderTab({ tabId: activeTab.tabId }),
+            );
+
+            if (finishOrderTab.fulfilled.match(result)) {
+              Alert.alert("Éxito", "Pedido finalizado correctamente.", [
+                {
+                  text: "OK",
+                  onPress: () => {
+                    const parentNavigation =
+                      navigation.getParent?.() ?? navigation;
+                    parentNavigation.navigate("Orders");
+                  },
+                },
+              ]);
+            } else {
+              Alert.alert(
+                "Error",
+                result.payload?.toString() ??
+                  "No se pudo finalizar el pedido.",
+              );
+            }
+          },
+        },
+      ],
+    );
+  };
+
   const renderOrderItem = ({
     item,
   }: {
@@ -46,33 +145,122 @@ export default function OrderDetail({ navigation }: any) {
     const itemTotal = item.quantity * item.unitPrice;
 
     return (
-      <View style={styles.itemRow}>
-        <View style={styles.itemQuantityContainer}>
-          <Text style={[styles.itemQuantity, { color: colors.primary }]}>
-            {item.quantity}x
-          </Text>
-        </View>
-
-        <View style={styles.itemDetails}>
-          <Text style={[styles.itemName, { color: colors.text }]}>
-            {item.name}
-          </Text>
-          <Text style={[styles.itemPriceUnit, { color: colors.textSecondary }]}>
-            Lps. {item.unitPrice.toFixed(2)} c/u
-          </Text>
-
-          {item.notes ? (
-            <Text style={[styles.itemNotes, { color: colors.textSecondary }]}>
-              Nota: {item.notes}
+      <View
+        style={[
+          styles.itemCard,
+          {
+            backgroundColor: colors.cardBackground,
+            borderColor: colors.inputBorder,
+          },
+        ]}
+      >
+        <View style={styles.itemHeaderRow}>
+          <View style={styles.itemDetails}>
+            <Text style={[styles.itemName, { color: colors.text }]}>
+              {item.name}
             </Text>
-          ) : null}
-        </View>
+            <Text
+              style={[styles.itemPriceUnit, { color: colors.textSecondary }]}
+            >
+              Lps. {item.unitPrice.toFixed(2)} c/u
+            </Text>
+          </View>
 
-        <View style={styles.itemActions}>
           <Text style={[styles.itemTotal, { color: colors.text }]}>
             Lps. {itemTotal.toFixed(2)}
           </Text>
         </View>
+
+        <View style={styles.quantityRow}>
+          <TouchableOpacity
+            style={[
+              styles.quantityButton,
+              { borderColor: colors.inputBorder },
+              !canEditItems && styles.disabledAction,
+            ]}
+            onPress={() =>
+              dispatch(
+                updateItemQuantity({
+                  tabId: activeTab.tabId,
+                  productId: item.productId,
+                  quantity: item.quantity - 1,
+                }),
+              )
+            }
+            disabled={!canEditItems}
+          >
+            <Text style={[styles.quantityButtonText, { color: colors.text }]}>
+              -
+            </Text>
+          </TouchableOpacity>
+
+          <Text style={[styles.quantityText, { color: colors.primary }]}>
+            {item.quantity}x
+          </Text>
+
+          <TouchableOpacity
+            style={[
+              styles.quantityButton,
+              { borderColor: colors.inputBorder },
+              !canEditItems && styles.disabledAction,
+            ]}
+            onPress={() =>
+              dispatch(
+                updateItemQuantity({
+                  tabId: activeTab.tabId,
+                  productId: item.productId,
+                  quantity: item.quantity + 1,
+                }),
+              )
+            }
+            disabled={!canEditItems}
+          >
+            <Text style={[styles.quantityButtonText, { color: colors.text }]}>
+              +
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.removeButton, !canEditItems && styles.disabledAction]}
+            onPress={() =>
+              Alert.alert(
+                "Eliminar producto",
+                `¿Quitar ${item.name} del pedido?`,
+                [
+                  { text: "Cancelar", style: "cancel" },
+                  {
+                    text: "Eliminar",
+                    style: "destructive",
+                    onPress: () =>
+                      dispatch(
+                        removeItemFromTab({
+                          tabId: activeTab.tabId,
+                          productId: item.productId,
+                        }),
+                      ),
+                  },
+                ],
+              )
+            }
+            disabled={!canEditItems}
+          >
+            <Text style={styles.removeButtonText}>Eliminar</Text>
+          </TouchableOpacity>
+        </View>
+
+        <CustomInput
+          placeholder="Nota del producto"
+          value={item.notes ?? ""}
+          onChange={(text) =>
+            dispatch(
+              updateItemNotes({
+                tabId: activeTab.tabId,
+                productId: item.productId,
+                notes: text,
+              }),
+            )
+          }
+        />
       </View>
     );
   };
@@ -83,18 +271,75 @@ export default function OrderDetail({ navigation }: any) {
     >
       <FlatList
         data={activeTab.items}
-        keyExtractor={(item) => item.productId}
+        keyExtractor={(item, index) =>
+          `${item.orderItemId ?? item.productId}-${index}`
+        }
         contentContainerStyle={styles.listContainer}
         ListHeaderComponent={
-          <View style={styles.headerContainer}>
-            <Text style={[styles.headerTitle, { color: colors.text }]}>
-              Detalle de Orden
-            </Text>
+          <View>
+            <View style={styles.headerContainer}>
+              <Text style={[styles.headerTitle, { color: colors.text }]}>
+                Detalle de Orden
+              </Text>
 
-            <View
-              style={[styles.tableBadge, { backgroundColor: colors.primary }]}
-            >
-              <Text style={styles.tableBadgeText}>{activeTab.tableName}</Text>
+              <View
+                style={[styles.tableBadge, { backgroundColor: colors.primary }]}
+              >
+                <Text style={styles.tableBadgeText}>{activeTab.tableName}</Text>
+              </View>
+            </View>
+
+            {activeTab.remoteOrderId ? (
+              <Text
+                style={[styles.remoteIdText, { color: colors.textSecondary }]}
+              >
+                Pedido en Supabase: {activeTab.remoteOrderId.slice(0, 8)}
+              </Text>
+            ) : null}
+
+            <View style={styles.statusGrid}>
+              <View style={styles.statusInputWrapper}>
+                <Text style={[styles.notesLabel, { color: colors.text }]}>
+                  Estado del pedido
+                </Text>
+                <CustomDropdown
+                  placeholder="Estado del pedido"
+                  options={ORDER_STATUS_OPTIONS}
+                  selectedValue={
+                    activeTab.status === "draft" ||
+                    activeTab.status === "delivered"
+                      ? "pending"
+                      : activeTab.status
+                  }
+                  onSelect={(value) =>
+                    dispatch(
+                      setTabStatus({
+                        tabId: activeTab.tabId,
+                        status: value as OrderStatus,
+                      }),
+                    )
+                  }
+                />
+              </View>
+
+              <View style={styles.statusInputWrapper}>
+                <Text style={[styles.notesLabel, { color: colors.text }]}>
+                  Estado de mesa
+                </Text>
+                <CustomDropdown
+                  placeholder="Estado de mesa"
+                  options={TABLE_STATUS_OPTIONS}
+                  selectedValue={activeTab.tableStatus}
+                  onSelect={(value) =>
+                    dispatch(
+                      setTabTableStatus({
+                        tabId: activeTab.tabId,
+                        tableStatus: value as RestaurantTableStatus,
+                      }),
+                    )
+                  }
+                />
+              </View>
             </View>
           </View>
         }
@@ -152,26 +397,20 @@ export default function OrderDetail({ navigation }: any) {
               />
             </View>
 
-            <CustomButton
-              title="Enviar a Cocina"
-              onPress={async () => {
-                const result = await dispatch(
-                  submitOrderTab({ tabId: activeTab.tabId }),
-                );
+            <View style={styles.footerButtonGroup}>
+              <CustomButton
+                title={activeTab.synced ? "Guardar cambios" : "Enviar a Cocina"}
+                onPress={handleSaveOrder}
+              />
 
-                if (submitOrderTab.fulfilled.match(result)) {
-                  // Configuramos la navegación para que ocurra HASTA que toquen OK
-                  Alert.alert("Éxito", "Orden enviada correctamente.", [
-                    {
-                      text: "OK",
-                      onPress: () => navigation.navigate("MainMenu"),
-                    },
-                  ]);
-                } else {
-                  Alert.alert("Error", "No se pudo enviar la orden.");
-                }
-              }}
-            />
+              {canFinishOrder ? (
+                <CustomButton
+                  title="Finalizar pedido"
+                  onPress={handleFinishOrder}
+                  variant="secondary"
+                />
+              ) : null}
+            </View>
           </View>
         }
       />
@@ -190,7 +429,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 12,
   },
   headerTitle: {
     fontSize: 24,
@@ -206,24 +445,32 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
-  itemRow: {
-    flexDirection: "row",
-    alignItems: "center",
+  remoteIdText: {
+    fontSize: 13,
     marginBottom: 16,
   },
-  itemQuantityContainer: {
-    width: 40,
+  statusGrid: {
+    gap: 12,
+    marginBottom: 16,
   },
-  itemQuantity: {
-    fontSize: 18,
-    fontWeight: "bold",
+  statusInputWrapper: {
+    width: "100%",
+  },
+  itemCard: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 14,
+  },
+  itemHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 12,
+    marginBottom: 12,
   },
   itemDetails: {
     flex: 1,
-    paddingRight: 10,
-  },
-  itemActions: {
-    alignItems: "flex-end",
   },
   itemName: {
     fontSize: 16,
@@ -233,17 +480,48 @@ const styles = StyleSheet.create({
   itemPriceUnit: {
     fontSize: 14,
   },
-  itemNotes: {
-    fontSize: 13,
-    marginTop: 4,
-    fontStyle: "italic",
-  },
   itemTotal: {
     fontSize: 16,
     fontWeight: "bold",
   },
+  quantityRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 12,
+  },
+  quantityButton: {
+    width: 34,
+    height: 34,
+    borderWidth: 1,
+    borderRadius: 17,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  quantityButtonText: {
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  quantityText: {
+    fontSize: 18,
+    fontWeight: "800",
+    minWidth: 38,
+    textAlign: "center",
+  },
+  removeButton: {
+    marginLeft: "auto",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  removeButtonText: {
+    color: "#ef4444",
+    fontWeight: "700",
+  },
+  disabledAction: {
+    opacity: 0.4,
+  },
   footerContainer: {
-    marginTop: 24,
+    marginTop: 10,
     padding: 20,
     borderRadius: 16,
     shadowColor: "#000",
@@ -282,6 +560,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginBottom: 8,
   },
+  footerButtonGroup: {
+    gap: 12,
+  },
   emptyState: {
     flex: 1,
     justifyContent: "center",
@@ -289,5 +570,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
+    textAlign: "center",
+    marginVertical: 20,
   },
 });

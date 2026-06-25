@@ -2,8 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useTheme } from "../contexts/ThemeContext";
 
-// Definimos los estados posibles para un pedido
-export type OrderStatus = "pending" | "cooking" | "ready" | "delivered";
+export type OrderStatus = "pending" | "preparing" | "ready" | "delivered";
 
 type Props = {
   orderId: string;
@@ -14,13 +13,12 @@ type Props = {
   onPress: () => void;
 };
 
-// Función para obtener los colores y etiquetas según el estado del pedido
 const getOrderStatusTheme = (status: OrderStatus) => {
   switch (status) {
     case "pending":
       return { bg: "#FEF3C7", text: "#D97706", label: "Pendiente" };
-    case "cooking":
-      return { bg: "#DBEAFE", text: "#1D4ED8", label: "En Cocina" };
+    case "preparing":
+      return { bg: "#DBEAFE", text: "#1D4ED8", label: "Preparando" };
     case "ready":
       return { bg: "#DCFCE7", text: "#15803D", label: "Listo" };
     case "delivered":
@@ -47,7 +45,6 @@ export default function OrderStatusCard({
       activeOpacity={0.7}
       onPress={onPress}
     >
-      {/* Encabezado: ID del Pedido y Hora */}
       <View style={styles.headerRow}>
         <Text style={[styles.orderId, { color: colors.text }]}>
           Pedido #{orderId}
@@ -57,7 +54,6 @@ export default function OrderStatusCard({
         </Text>
       </View>
 
-      {/* Cuerpo: Información de la Mesa y Total */}
       <View style={styles.bodyRow}>
         <View style={styles.tableInfo}>
           <Text style={[styles.tableLabel, { color: colors.textSecondary }]}>
@@ -78,7 +74,6 @@ export default function OrderStatusCard({
         </View>
       </View>
 
-      {/* Pie: Insignia (Badge) de Estado */}
       <View style={styles.footerRow}>
         <View style={[styles.badge, { backgroundColor: statusTheme.bg }]}>
           <Text style={[styles.badgeText, { color: statusTheme.text }]}>
@@ -96,12 +91,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     borderRadius: 16,
     padding: 16,
-    // Sombras para iOS
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
-    // Sombras para Android
     elevation: 3,
   },
   headerRow: {

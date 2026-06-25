@@ -46,14 +46,16 @@ export default function MenuScreen() {
     });
   }, [products, categoryFilter]);
 
+  const canEditActiveTab = !!activeTab && activeTab.status !== "delivered";
+
   const handleAddProduct = (
     product: (typeof products)[number],
     quantity: number,
   ) => {
-    if (!activeTab || activeTab.status !== "draft") {
+    if (!activeTab || !canEditActiveTab) {
       Alert.alert(
-        "Mesa ocupada",
-        "Esta orden ya fue enviada. Selecciona una mesa disponible.",
+        "Sin pedido editable",
+        "Selecciona una mesa disponible o carga un pedido activo desde Pedidos.",
       );
       return;
     }
@@ -85,13 +87,13 @@ export default function MenuScreen() {
         />
       </View>
 
-      {!activeTab || activeTab.status !== "draft" ? (
+      {!canEditActiveTab ? (
         <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-          Selecciona una mesa antes de agregar productos.
+          Selecciona una mesa disponible o carga un pedido activo para agregar productos.
         </Text>
       ) : (
         <Text style={[styles.activeTableText, { color: colors.textSecondary }]}>
-          Mesa activa: {activeTab.tableName}
+          Pedido editable: {activeTab.tableName}
         </Text>
       )}
 

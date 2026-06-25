@@ -1,27 +1,26 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import type { NavigatorScreenParams } from "@react-navigation/native";
 import LoginScreen from "../screens/LoginScreen";
 import { useTheme } from "../contexts/ThemeContext";
 import TabNavigator from "./TabsNavigator";
+import type { TabsParamList } from "./TabsNavigator";
 import RegisterScreen from "../screens/RegisterScreen";
 import MainMenuScreen from "../screens/MainMenuScreen";
 import SettingsScreen from "../screens/UserSettings/SettingsScreen";
 import OrdersScreen from "../screens/OrdersScreen";
 import { useAuth } from "../contexts/AuthContext";
 
-//1. declarar tipado para pantallas y sus parametros
 export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   MainMenu: undefined;
-  OrderTabs: undefined;
+  OrderTabs: NavigatorScreenParams<TabsParamList> | undefined;
   Settings: undefined;
   Orders: undefined;
 };
 
-//2. crear el stack navigator el cual va a manejar la navegacion
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-//3. utilizar el stack
 export default function StackNavigator() {
   const { colors } = useTheme();
   const { user } = useAuth();
