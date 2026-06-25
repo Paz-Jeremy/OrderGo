@@ -6,8 +6,9 @@ import TabNavigator from "./TabsNavigator";
 import type { TabsParamList } from "./TabsNavigator";
 import RegisterScreen from "../screens/RegisterScreen";
 import MainMenuScreen from "../screens/MainMenuScreen";
-import SettingsScreen from "../screens/UserSettings/SettingsScreen";
+import UserSettingsTabsNavigator from "./UserSettingsTabsNavigator";
 import OrdersScreen from "../screens/OrdersScreen";
+import KitchenOrdersScreen from "../screens/KitchenOrdersScreen";
 import { useAuth } from "../contexts/AuthContext";
 
 export type RootStackParamList = {
@@ -17,6 +18,7 @@ export type RootStackParamList = {
   OrderTabs: NavigatorScreenParams<TabsParamList> | undefined;
   Settings: undefined;
   Orders: undefined;
+  KitchenOrders: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -39,11 +41,13 @@ export default function StackNavigator() {
         component={LoginScreen}
         options={{ headerShown: false, gestureEnabled: false }}
       />
+
       <Stack.Screen
         name="Register"
         component={RegisterScreen}
         options={{ headerShown: true, title: "" }}
       />
+
       <Stack.Screen
         name="MainMenu"
         component={MainMenuScreen}
@@ -53,6 +57,7 @@ export default function StackNavigator() {
           gestureEnabled: false,
         }}
       />
+
       <Stack.Screen
         name="OrderTabs"
         component={TabNavigator}
@@ -70,9 +75,15 @@ export default function StackNavigator() {
       />
 
       <Stack.Screen
+        name="KitchenOrders"
+        component={KitchenOrdersScreen}
+        options={{ headerShown: true, title: "Pedidos Cocina" }}
+      />
+
+      <Stack.Screen
         name="Settings"
-        component={SettingsScreen}
-        options={{ headerShown: true, title: "Configuración" }}
+        component={UserSettingsTabsNavigator}
+        options={{ headerShown: true, title: "Cuenta" }}
       />
     </Stack.Navigator>
   );

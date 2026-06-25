@@ -30,10 +30,27 @@ type AuthContextType = {
 type ProfileRow = {
   id: string;
   name: string;
-  role: Role;
+  role: string | null;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
+
+const normalizeRole = (role?: string | null): Role => {
+  switch ((role ?? "").toLowerCase()) {
+    case "admin":
+    case "administrador":
+      return "admin";
+
+    case "kitchen":
+    case "cocina":
+      return "kitchen";
+
+    case "waiter":
+    case "mesero":
+    default:
+      return "waiter";
+  }
+};
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -63,15 +80,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       session.user.email ??
       "";
 
-    const fallbackRole =
-      (session.user.user_metadata?.role as Role | undefined) ?? "waiter";
+    const metadataRole = session.user.user_metadata?.role as string | undefined;
+    const profileRole = !error && profile?.role ? profile.role : metadataRole;
 
     setUser({
       token: session.access_token,
       id: session.user.id,
       email: session.user.email ?? "",
       name: !error && profile?.name ? profile.name : fallbackName,
-      role: !error && profile?.role ? profile.role : fallbackRole,
+      role: normalizeRole(profileRole),
     });
 
     await AsyncStorage.setItem("token", session.access_token);
