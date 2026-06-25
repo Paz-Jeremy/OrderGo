@@ -11,27 +11,27 @@ import {
 
 import CustomInput from "../components/CustomInput";
 import CustomButton from "../components/CustomButton";
-
-// Importa el contexto de tu tema (ajusta la ruta según tu proyecto)
 import { useTheme } from "../contexts/ThemeContext";
 import CustomDropdown from "../components/CustomDropdown";
 import { useAuth } from "../contexts/AuthContext";
 
+type Role = "waiter" | "kitchen" | "admin";
+
 export default function RegisterScreen({ navigation }: any) {
-  const { colors } = useTheme(); // Extraemos los colores dinámicos
+  const { colors } = useTheme();
   const { register } = useAuth();
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("");
+  const [role, setRole] = useState<Role | "">("");
 
   const [isLoading, setIsLoading] = useState(false);
 
-  // Definimos las opciones del Dropdown
   const rolesOptions = [
     { label: "Administrador", value: "admin" },
-    { label: "Mesero", value: "mesero" },
-    { label: "Cocina", value: "cocina" },
+    { label: "Mesero", value: "waiter" },
+    { label: "Cocina", value: "kitchen" },
   ];
 
   const handleRegister = async () => {
@@ -42,25 +42,27 @@ export default function RegisterScreen({ navigation }: any) {
       );
       return;
     }
+
     setIsLoading(true);
+
     const success = await register(
       name.trim(),
-      role.trim(),
+      role as Role,
       email.trim(),
       password,
     );
+
     setIsLoading(false);
+
     if (success) {
       navigation.navigate("Login");
     }
   };
 
   return (
-    // SafeAreaView asegura que el contenido no quede debajo del reloj o el notch
     <SafeAreaView
       style={[styles.safeArea, { backgroundColor: colors.background }]}
     >
-      {/* Evita que el teclado tape los inputs al escribir */}
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.container}
@@ -68,7 +70,6 @@ export default function RegisterScreen({ navigation }: any) {
         <View
           style={[styles.formContainer, { backgroundColor: colors.background }]}
         >
-          {/* Textos de bienvenida estilizados */}
           <View style={styles.headerContainer}>
             <Text style={[styles.title, { color: colors.inputText }]}>
               Registro
@@ -78,13 +79,11 @@ export default function RegisterScreen({ navigation }: any) {
             </Text>
           </View>
 
-          {/* Formulario */}
-
           <CustomInput
             placeholder="Ingresa tu nombre"
             value={name}
             onChange={setName}
-          ></CustomInput>
+          />
 
           <CustomInput
             type="email"
@@ -104,10 +103,9 @@ export default function RegisterScreen({ navigation }: any) {
             placeholder="Selecciona un rol"
             options={rolesOptions}
             selectedValue={role}
-            onSelect={setRole}
+            onSelect={(value) => setRole(value as Role)}
           />
 
-          {/* Contenedor del botón para darle separación */}
           <View style={styles.buttonWrapper}>
             <CustomButton
               title="Registrar"

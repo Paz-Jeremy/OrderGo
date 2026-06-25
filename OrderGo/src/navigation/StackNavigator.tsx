@@ -57,7 +57,11 @@ export default function StackNavigator() {
       <Stack.Screen
         name="OrderTabs"
         component={TabNavigator}
-        options={{ headerShown: false, gestureEnabled: false }}
+        options={{
+          title: "Orden",
+          headerShown: true,
+          gestureEnabled: true,
+        }}
       />
 
       <Stack.Screen

@@ -1,63 +1,82 @@
-import { createContext, useContext, useState, useEffect } from "react";
-import { supabase } from "../services/supabaseClient";
+import { createContext, useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Alert } from "react-native";
+import { Session } from "@supabase/supabase-js";
+import { supabase } from "../services/supabaseClient";
 
-//1. Tipado de objeto principal del contexto
+export type Role = "waiter" | "kitchen" | "admin";
+
 type User = {
   token: string;
-  role: "admin" | "mesero" | "cocina";
+  id: string;
+  role: Role;
   name: string;
   email: string;
-  pwd?: string;
 } | null;
 
 type AuthContextType = {
-  user: User | null;
+  user: User;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   register: (
     name: string,
-    role: string,
+    role: Role,
     email: string,
     password: string,
   ) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
-//2. Creacion del contexto
+type ProfileRow = {
+  id: string;
+  name: string;
+  role: Role;
+};
+
 const AuthContext = createContext<AuthContextType | null>(null);
 
-//4. exposicion de contexto en forma de hook personalizdo
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) throw new Error("useAuth debe usarse dentro de AuthProvider");
   return context;
 };
 
-//3. Crear el Provider: medio por el cual se maneja el estado global
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const setUserSession = (data: any) => {
-    const session = data.session;
-
-    if (session && session.user) {
-      setUser({
-        token: session.access_token,
-        role: session.user.user_metadata.role,
-        email: session.user.email,
-        name: session.user.user_metadata.name,
-      });
-      AsyncStorage.setItem("token", session.access_token);
-    } else {
+  const hydrateUserFromSession = async (session: Session | null) => {
+    if (!session?.user) {
       setUser(null);
-      AsyncStorage.removeItem("token");
+      await AsyncStorage.removeItem("token");
+      return;
     }
+
+    const { data: profile, error } = await supabase
+      .from("profiles")
+      .select("id, name, role")
+      .eq("id", session.user.id)
+      .single<ProfileRow>();
+
+    const fallbackName =
+      (session.user.user_metadata?.name as string | undefined) ??
+      session.user.email ??
+      "";
+
+    const fallbackRole =
+      (session.user.user_metadata?.role as Role | undefined) ?? "waiter";
+
+    setUser({
+      token: session.access_token,
+      id: session.user.id,
+      email: session.user.email ?? "",
+      name: !error && profile?.name ? profile.name : fallbackName,
+      role: !error && profile?.role ? profile.role : fallbackRole,
+    });
+
+    await AsyncStorage.setItem("token", session.access_token);
   };
 
-  // Al montar la app: restaurar sesión si existe
   useEffect(() => {
     const restoreSession = async () => {
       try {
@@ -67,10 +86,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUser(null);
           await AsyncStorage.removeItem("token");
         } else {
-          setUserSession(data);
+          await hydrateUserFromSession(data.session);
         }
-      } catch (e) {
+      } catch {
         setUser(null);
+        await AsyncStorage.removeItem("token");
       } finally {
         setIsLoading(false);
       }
@@ -78,26 +98,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     restoreSession();
 
-    // Escuchar cambios de sesión (refresh de token, logout en otra pestaña, etc.)
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (session && session.user) {
-          setUser({
-            token: session.access_token,
-            role: session.user.user_metadata.role,
-            email: session.user.user_metadata.email,
-            name: session.user.user_metadata.name,
-          });
-          AsyncStorage.setItem("token", session.access_token);
-        } else {
-          setUser(null);
-          AsyncStorage.removeItem("token");
-        }
-      },
-    );
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session) {
+        await hydrateUserFromSession(session);
+      } else {
+        setUser(null);
+        await AsyncStorage.removeItem("token");
+      }
+    });
 
     return () => {
-      listener.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
 
@@ -108,17 +121,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     if (error) {
-      Alert.alert("Error al iniciar sesion", error.message);
+      Alert.alert("Error al iniciar sesión", error.message);
       return false;
     }
 
-    setUserSession(data);
+    await hydrateUserFromSession(data.session);
     return true;
   };
 
   const register = async (
     name: string,
-    role: string,
+    role: Role,
     email: string,
     password: string,
   ) => {
@@ -128,7 +141,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       options: {
         data: {
           name,
-          role: role,
+          role,
         },
       },
     });
@@ -138,11 +151,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return false;
     }
 
+    if (data.session) {
+      await hydrateUserFromSession(data.session);
+    }
+
     Alert.alert(
       "¡Registro exitoso!",
       "La cuenta fue creada correctamente. Verifica tu correo electrónico si la confirmación está habilitada.",
     );
-    console.log("Usuario registrado:", data.user);
+
     return true;
   };
 

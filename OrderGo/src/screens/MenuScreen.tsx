@@ -1,119 +1,76 @@
-import React, { useState } from "react";
-import { StyleSheet, FlatList, SafeAreaView, Text, View } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  StyleSheet,
+  FlatList,
+  SafeAreaView,
+  Text,
+  View,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import { useTheme } from "../contexts/ThemeContext";
 import ProductCard from "../components/ProductCard";
 import CustomDropdown from "../components/CustomDropdown";
-
-const PRODUCT_ITEMS = [
-  {
-    id: "1",
-    name: "Baleada Especial",
-    description: "Tortilla de harina con frijoles, queso, mantequilla y huevo.",
-    price: 45,
-    category: "food",
-    image:
-      "https://www.goya.com/wp-content/uploads/2023/10/honduran-baleadas.jpg",
-    disponible: true,
-  },
-  {
-    id: "2",
-    name: "Pollo con Tajadas",
-    description:
-      "Pollo frito acompañado de tajadas de plátano verde y ensalada.",
-    price: 120,
-    category: "food",
-    image:
-      "https://tanbuenoquesenota.com/hn/wp-content/uploads/sites/4/2022/06/Pollo-Chuco-1920x1080-1-1568x882.jpg",
-    disponible: true,
-  },
-  {
-    id: "3",
-    name: "Sopa de Caracol",
-    description:
-      "Tradicional sopa costeña preparada con caracol, coco y vegetales.",
-    price: 150,
-    category: "food",
-    image:
-      "https://www.recetashonduras.com/base/stock/Recipe/sopa-de-caracol/sopa-de-caracol_web.jpg.webp",
-    disponible: true,
-  },
-  {
-    id: "4",
-    name: "Montuca",
-    description: "Tamal de maíz relleno de carne y envuelto en hojas de maíz.",
-    price: 35,
-    category: "food",
-    image: "https://buenprovecho.hn/wp-content/uploads/2019/08/3.jpg",
-    disponible: true,
-  },
-  {
-    id: "5",
-    name: "Carne Asada",
-    description:
-      "Carne de res a la parrilla acompañada de chismol, frijoles y tortillas.",
-    price: 140,
-    category: "food",
-    image:
-      "https://www.recetashonduras.com/base/stock/Recipe/carne-asada/carne-asada_web.jpg.webp",
-    disponible: true,
-  },
-  {
-    id: "6",
-    name: "Yuca con Chicharrón",
-    description: "Yuca cocida servida con chicharrón y curtido de repollo.",
-    price: 90,
-    category: "food",
-    image:
-      "https://www.recetashonduras.com/base/stock/Recipe/yuca-con-chicharrones/yuca-con-chicharrones_web.jpg",
-    disponible: true,
-  },
-  {
-    id: "7",
-    name: "Horchata Hondureña",
-    description: "Bebida refrescante elaborada con arroz y especias.",
-    price: 25,
-    category: "drink",
-    image:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQA6nsgqV6faDFkZFfWGgqy9mEYo1G0KvtCUw&shttps://www.hondurastips.hn/wp-content/uploads/2015/04/horchata11.jpg",
-    disponible: true,
-  },
-  {
-    id: "8",
-    name: "Coca-Cola",
-    description: "Bebida refrescante y gaseosa.",
-    price: 20,
-    category: "drink",
-    image:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUaNvgeQbrMhKlXAJLQPX97KeZXqccu17GaA&s",
-    disponible: true,
-  },
-  {
-    id: "9",
-    name: "Café Hondureño",
-    description: "Café premium producido en las montañas de Honduras.",
-    price: 30,
-    category: "drink",
-    image:
-      "https://www.revistaeyn.com/binrepository/600x400/0c0/0d0/none/26086/UECT/negocios-honduras_139807_10_EN473246_MG233799389.jpg",
-    disponible: true,
-  },
-];
-
-const STATUS_OPTIONS = [
-  { label: "Todas", value: "all" },
-  { label: "Bebidas", value: "drink" },
-  { label: "Comida", value: "food" },
-];
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { addItemToTab } from "../store/orderTabsSlice";
+import { selectActiveTab } from "../store/orderTabsSelectors";
+import {
+  fetchCatalog,
+  selectProducts,
+  selectCatalogLoading,
+  selectCatalogError,
+} from "../store/catalogSlice";
+import { selectCategoryOptions } from "../store/catalogSelectors";
 
 export default function MenuScreen() {
   const { colors } = useTheme();
+  const dispatch = useAppDispatch();
+
+  const activeTab = useAppSelector(selectActiveTab);
+  const products = useAppSelector(selectProducts);
+  const loading = useAppSelector(selectCatalogLoading);
+  const error = useAppSelector(selectCatalogError);
+  const categoryOptions = useAppSelector(selectCategoryOptions);
+
   const [categoryFilter, setCategoryFilter] = useState("all");
 
-  const filteredProducts = PRODUCT_ITEMS.filter((item) => {
-    const matchesCategory =
-      categoryFilter === "all" || item.category === categoryFilter;
-    return matchesCategory;
-  });
+  useEffect(() => {
+    dispatch(fetchCatalog());
+  }, [dispatch]);
+
+  const filteredProducts = useMemo(() => {
+    return products.filter((item) => {
+      const matchesCategory =
+        categoryFilter === "all" || item.category_id === categoryFilter;
+      return matchesCategory && item.is_available;
+    });
+  }, [products, categoryFilter]);
+
+  const handleAddProduct = (
+    product: (typeof products)[number],
+    quantity: number,
+  ) => {
+    if (!activeTab || activeTab.status !== "draft") {
+      Alert.alert(
+        "Mesa ocupada",
+        "Esta orden ya fue enviada. Selecciona una mesa disponible.",
+      );
+      return;
+    }
+
+    dispatch(
+      addItemToTab({
+        tabId: activeTab.tabId,
+        item: {
+          productId: product.id,
+          name: product.name,
+          unitPrice: product.price,
+          imageUrl: product.img_url,
+        },
+        quantity,
+      }),
+    );
+  };
 
   return (
     <SafeAreaView
@@ -121,54 +78,88 @@ export default function MenuScreen() {
     >
       <View style={styles.dropdownContainer}>
         <CustomDropdown
-          placeholder={"Seleccione la categoría"}
-          options={STATUS_OPTIONS}
+          placeholder="Seleccione la categoría"
+          options={categoryOptions}
           selectedValue={categoryFilter}
-          onSelect={(value) => setCategoryFilter(value)}
+          onSelect={setCategoryFilter}
         />
       </View>
 
-      <FlatList
-        data={filteredProducts}
-        keyExtractor={(item) => item.id}
-        numColumns={1}
-        contentContainerStyle={styles.listContainer}
-        initialNumToRender={5}
-        renderItem={({ item }) => (
-          <ProductCard
-            name={item.name}
-            description={item.description}
-            price={item.price}
-            image={item.image}
-            onPress={(quantity) => {
-              console.log(`Añadiendo ${quantity} de ${item.name}`);
-            }}
-          />
-        )}
-        ListEmptyComponent={
-          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            No se encontraron productos con esos filtros.
+      {!activeTab || activeTab.status !== "draft" ? (
+        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+          Selecciona una mesa antes de agregar productos.
+        </Text>
+      ) : (
+        <Text style={[styles.activeTableText, { color: colors.textSecondary }]}>
+          Mesa activa: {activeTab.tableName}
+        </Text>
+      )}
+
+      {loading ? (
+        <View style={styles.centerState}>
+          <ActivityIndicator size="large" />
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+            Cargando catálogo...
           </Text>
-        }
-      />
+        </View>
+      ) : error ? (
+        <View style={styles.centerState}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filteredProducts}
+          keyExtractor={(item) => item.id}
+          numColumns={1}
+          contentContainerStyle={styles.listContainer}
+          initialNumToRender={5}
+          renderItem={({ item }) => (
+            <ProductCard
+              name={item.name}
+              description={item.description ?? undefined}
+              price={item.price}
+              image={item.img_url ?? undefined}
+              onPress={(quantity) => handleAddProduct(item, quantity)}
+            />
+          )}
+          ListEmptyComponent={
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+              No se encontraron productos con esos filtros.
+            </Text>
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  dropdownContainer: {
+  container: { flex: 1 },
+  dropdownContainer: { paddingHorizontal: 16, paddingTop: 16 },
+  activeTableText: {
     paddingHorizontal: 16,
-    paddingTop: 16,
+    marginBottom: 6,
+    marginTop: 4,
+    fontSize: 14,
   },
-  listContainer: {
-    paddingVertical: 15,
-  },
+  listContainer: { paddingVertical: 15 },
   emptyText: {
     textAlign: "center",
-    marginTop: 40,
+    marginTop: 24,
     fontSize: 16,
+    paddingHorizontal: 16,
+  },
+  centerState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 12,
+  },
+  loadingText: { fontSize: 14 },
+  errorText: {
+    fontSize: 14,
+    textAlign: "center",
+    paddingHorizontal: 16,
+    color: "#ef4444",
   },
 });

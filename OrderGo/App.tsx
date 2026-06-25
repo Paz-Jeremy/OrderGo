@@ -4,6 +4,8 @@ import { navigationRef } from "./src/navigation/NavigationService";
 import StackNavigator from "./src/navigation/StackNavigator";
 import { AuthProvider, useAuth } from "./src/contexts/AuthContext";
 import { ActivityIndicator, View } from "react-native";
+import { store } from "./src/store";
+import { Provider } from "react-redux";
 
 function AppContent() {
   const { isLoading } = useAuth();
@@ -25,10 +27,12 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <AppContent />
-      </ThemeProvider>
-    </AuthProvider>
+    <Provider store={store}>
+      <AuthProvider>
+        <ThemeProvider>
+          <AppContent />
+        </ThemeProvider>
+      </AuthProvider>
+    </Provider>
   );
 }

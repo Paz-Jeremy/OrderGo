@@ -1,19 +1,27 @@
-import React, { useState } from "react";
-import { StyleSheet, FlatList, SafeAreaView, Text, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  StyleSheet,
+  FlatList,
+  SafeAreaView,
+  Text,
+  View,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
 import { useTheme } from "../contexts/ThemeContext";
 import TableStatusCard from "../components/TableStatusCard";
 import CustomInput from "../components/CustomInput";
 import CustomDropdown from "../components/CustomDropdown";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { openTabForTable } from "../store/orderTabsSlice";
+import {
+  fetchTables,
+  selectTables,
+  selectTablesLoading,
+  selectTablesError,
+} from "../store/tablesSlice";
+import { useNavigation } from "@react-navigation/native";
 
-const TABLE_ITEMS = [
-  { id: "1", tableNumber: "1", status: "occupied" },
-  { id: "2", tableNumber: "2", status: "available" },
-  { id: "3", tableNumber: "3", status: "available" },
-  { id: "4", tableNumber: "4", status: "occupied" },
-  { id: "5", tableNumber: "5", status: "available" },
-];
-
-// 1. Definimos las opciones para tu Dropdown
 const STATUS_OPTIONS = [
   { label: "Todas", value: "all" },
   { label: "Disponibles", value: "available" },
@@ -22,67 +30,103 @@ const STATUS_OPTIONS = [
 
 export default function TablesScreen() {
   const { colors } = useTheme();
-  
-  // Estado para el texto de búsqueda
+  const dispatch = useAppDispatch();
+  const navigation = useNavigation<any>();
+
+  const tables = useAppSelector(selectTables);
+  const loading = useAppSelector(selectTablesLoading);
+  const error = useAppSelector(selectTablesError);
+
   const [searchQuery, setSearchQuery] = useState("");
-  // 2. Estado para el filtro del Dropdown
   const [statusFilter, setStatusFilter] = useState("all");
 
-  // 3. Lógica para filtrar por ambos criterios
-  const filteredTables = TABLE_ITEMS.filter((item) => {
-    // ¿El número de la mesa incluye lo que escribimos?
-    const matchesSearch = item.tableNumber.includes(searchQuery);
-    
-    // ¿El estado coincide? (Si el filtro es 'all', mostramos todas)
-    const matchesStatus = statusFilter === "all" || item.status === statusFilter;
-    
-    // Solo mostramos la mesa si cumple AMBAS condiciones
+  useEffect(() => {
+    dispatch(fetchTables());
+  }, [dispatch]);
+
+  const filteredTables = tables.filter((item) => {
+    const matchesSearch = String(item.table_number).includes(searchQuery);
+    const matchesStatus =
+      statusFilter === "all" || item.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  const handlePressTable = (item: (typeof tables)[number]) => {
+    if (item.status === "occupied") {
+      Alert.alert(
+        "Mesa ocupada",
+        "Esta mesa ya tiene un pedido activo. No puedes crear otro pedido.",
+      );
+      return;
+    }
+
+    dispatch(
+      openTabForTable({
+        tableId: item.id,
+        tableName: `Mesa ${item.table_number}`,
+        tableNumber: item.table_number,
+        tableStatus: item.status,
+      }),
+    );
+
+    navigation.navigate("Products");
+  };
 
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
     >
-      {/* 4. Contenedor para alinear los filtros lado a lado */}
       <View style={styles.filtersContainer}>
         <View style={styles.filterWrapper}>
-          <CustomInput 
-            type="number" 
-            placeholder={"Nº de mesa"} 
-            value={searchQuery} 
-            onChange={(text) => setSearchQuery(text)} 
+          <CustomInput
+            type="number"
+            placeholder="Nº de mesa"
+            value={searchQuery}
+            onChange={(text) => setSearchQuery(text)}
           />
         </View>
 
         <View style={styles.filterWrapper}>
-          <CustomDropdown 
-            placeholder={"Estado"} 
-            options={STATUS_OPTIONS} 
-            selectedValue={statusFilter} 
-            onSelect={(value) => setStatusFilter(value)} // Actualiza el filtro
+          <CustomDropdown
+            placeholder="Estado"
+            options={STATUS_OPTIONS}
+            selectedValue={statusFilter}
+            onSelect={(value) => setStatusFilter(value)}
           />
         </View>
       </View>
-      
-      <FlatList
-        data={filteredTables}
-        keyExtractor={(item) => item.id}
-        numColumns={1/2}
-        contentContainerStyle={styles.listContainer}
-        renderItem={({ item }) => (
-          <TableStatusCard
-            tableNumber={item.tableNumber}
-            status={item.status}
-            onPress={() => console.log(`Entrando a mesa #${item.id}`)}
-          />
-        )}
-        ListEmptyComponent={
+
+      {loading ? (
+        <View style={styles.centerState}>
+          <ActivityIndicator size="large" />
           <Text style={[styles.emptyText, { color: colors.inputText }]}>
-            No se encontraron mesas con esos filtros.
+            Cargando mesas...
           </Text>
-        }
-      />
+        </View>
+      ) : error ? (
+        <View style={styles.centerState}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filteredTables}
+          keyExtractor={(item) => item.id}
+          numColumns={1/2}
+          contentContainerStyle={styles.listContainer}
+          renderItem={({ item }) => (
+            <TableStatusCard
+              tableNumber={String(item.table_number)}
+              status={item.status}
+              onPress={() => handlePressTable(item)}
+            />
+          )}
+          ListEmptyComponent={
+            <Text style={[styles.emptyText, { color: colors.inputText }]}>
+              No se encontraron mesas con esos filtros.
+            </Text>
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -90,10 +134,10 @@ export default function TablesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 15
+    padding: 15,
   },
   filtersContainer: {
-    flexDirection: "row", 
+    flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 15,
     gap: 10,
@@ -109,5 +153,17 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 40,
     fontSize: 16,
-  }
+  },
+  centerState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 12,
+  },
+  errorText: {
+    textAlign: "center",
+    color: "#ef4444",
+    fontSize: 16,
+    paddingHorizontal: 16,
+  },
 });
